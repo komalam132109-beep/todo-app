@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <link rel="manifest" href="manifest.json">
+
+    <title>My To-Do App</title>
+
+    ...
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f3f5ff;
+        }
+
+        .app {
+            max-width: 500px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .input-box {
+            background: white;
+            padding: 18px;
+            border-radius: 15px;
+            box-shadow: 0 3px 10px #ddd;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+
+        label {
+            display: block;
+            margin-top: 12px;
+            font-weight: bold;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        .add-btn {
+            width: 100%;
+            margin-top: 15px;
+            padding: 13px;
+            border: none;
+            border-radius: 8px;
+            background: #4f46e5;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .reminder-btn {
+            width: 100%;
+            margin-top: 10px;
+            padding: 13px;
+            border: none;
+            border-radius: 8px;
+            background: #f59e0b;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .counter {
+            text-align: center;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+
+        ul {
+            padding: 0;
+        }
+
+        li {
+            list-style: none;
+            background: white;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px #ddd;
+        }
+
+        .task-name {
+            font-size: 17px;
+            font-weight: bold;
+        }
+
+        .task-info {
+            color: #666;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        .buttons {
+            margin-top: 12px;
+        }
+
+        .buttons button {
+            border: none;
+            padding: 8px 12px;
+            border-radius: 7px;
+            margin-right: 5px;
+            font-size: 14px;
+        }
+
+        .complete {
+            background: #d1fae5;
+        }
+
+        .delete {
+            background: #fee2e2;
+        }
+
+        .clear-btn {
+            width: 100%;
+            padding: 11px;
+            border: none;
+            border-radius: 8px;
+            background: #333;
+            color: white;
+            margin-top: 10px;
+        }
+
+        .completed .task-name {
+            text-decoration: line-through;
+            color: #888;
+        }
+
+    </style>
+</>
+
+
+<body>
+
+<div class="app">
+
+    <h1>📝 My To-Do List</h1>
+
+    <div class="subtitle">
+        Organize your day
+    </div>
+
+
+    <div class="input-box">
+
+        <input
+            type="text"
+            id="taskInput"
+            placeholder="What do you need to do?"
+        >
+
+        <label>📅 Date</label>
+
+        <input
+            type="date"
+            id="taskDate"
+        >
+
+
+        <label>⏰ Time</label>
+
+        <input
+            type="time"
+            id="taskTime"
+        >
+
+
+        <button
+            class="add-btn"
+            onclick="addTask()">
+
+            ➕ Add Task
+
+        </button>
+
+
+        <button
+            class="reminder-btn"
+            onclick="testNotification()">
+
+            🔔 Test Reminder
+
+        </button>
+
+    </div>
+
+
+    <div
+        class="counter"
+        id="counter">
+
+        0 tasks remaining
+
+    </div>
+
+
+    <ul id="taskList"></ul>
+
+
+    <button
+        class="clear-btn"
+        onclick="clearCompleted()">
+
+        🧹 Clear Completed
+
+    </button>
+
+</div>
+
+
+<script>
+
+    /* =========================
+       LOAD SAVED TASKS
+    ========================= */
+
+    let tasks =
+        JSON.parse(localStorage.getItem("myTasks")) || [];
+
+
+    /* =========================
+       SAVE TASKS
+    ========================= */
+
+    function saveTasks() {
+
+        localStorage.setItem(
+            "myTasks",
+            JSON.stringify(tasks)
+        );
+
+    }
+
+
+    /* =========================
+       DISPLAY TASKS
+    ========================= */
+
+    function displayTasks() {
+
+        let list =
+            document.getElementById("taskList");
+
+        list.innerHTML = "";
+
+
+        tasks.forEach(function(task, index) {
+
+            let li =
+                document.createElement("li");
+
+
+            if (task.completed) {
+
+                li.classList.add("completed");
+
+            }
+
+
+            li.innerHTML = `
+
+                <div class="task-name">
+
+                    ${task.name}
+
+                </div>
+
+
+                <div class="task-info">
+
+                    📅 ${task.date || "No date"}
+
+                    <br>
+
+                    ⏰ ${task.time || "No time"}
+
+                </div>
+
+
+                <div class="buttons">
+
+                    <button
+                        class="complete"
+                        onclick="completeTask(${index})">
+
+                        ${task.completed
+                            ? "↩️ Undo"
+                            : "✅ Complete"}
+
+                    </button>
+
+
+                    <button
+                        class="delete"
+                        onclick="deleteTask(${index})">
+
+                        🗑️ Delete
+
+                    </button>
+
+                </div>
+
+            `;
+
+
+            list.appendChild(li);
+
+        });
+
+
+        updateCounter();
+
+    }
+
+
+    /* =========================
+       ADD TASK
+    ========================= */
+
+    function addTask() {
+
+        let name =
+            document.getElementById("taskInput").value;
+
+        let date =
+            document.getElementById("taskDate").value;
+
+        let time =
+            document.getElementById("taskTime").value;
+
+
+        if (name === "") {
+
+            alert("Please enter a task");
+
+            return;
+
+        }
+
+
+        let newTask = {
+
+            name: name,
+
+            date: date,
+
+            time: time,
+
+            completed: false,
+
+            reminded: false
+
+        };
+
+
+        tasks.push(newTask);
+
+
+        saveTasks();
+
+        displayTasks();
+
+
+        document.getElementById("taskInput").value = "";
+
+        document.getElementById("taskDate").value = "";
+
+        document.getElementById("taskTime").value = "";
+
+
+        checkReminders();
+
+    }
+
+
+    /* =========================
+       COMPLETE TASK
+    ========================= */
+
+    function completeTask(index) {
+
+        tasks[index].completed =
+            !tasks[index].completed;
+
+
+        saveTasks();
+
+        displayTasks();
+
+    }
+
+
+    /* =========================
+       DELETE TASK
+    ========================= */
+
+    function deleteTask(index) {
+
+        tasks.splice(index, 1);
+
+
+        saveTasks();
+
+        displayTasks();
+
+    }
+
+
+    /* =========================
+       CLEAR COMPLETED TASKS
+    ========================= */
+
+    function clearCompleted() {
+
+        tasks =
+            tasks.filter(function(task) {
+
+                return !task.completed;
+
+            });
+
+
+        saveTasks();
+
+        displayTasks();
+
+    }
+
+
+    /* =========================
+       TASK COUNTER
+    ========================= */
+
+    function updateCounter() {
+
+        let remaining =
+            tasks.filter(function(task) {
+
+                return !task.completed;
+
+            }).length;
+
+
+        document.getElementById("counter").innerText =
+
+            remaining + " tasks remaining";
+
+    }
+
+
+    /* =========================
+       TEST NOTIFICATION
+    ========================= */
+
+    function testNotification() {
+
+        if (!("Notification" in window)) {
+
+            alert(
+                "Your browser does not support notifications."
+            );
+
+            return;
+
+        }
+
+
+        Notification.requestPermission()
+        .then(function(permission) {
+
+            if (permission === "granted") {
+
+                new Notification(
+                    "🔔 My To-Do Reminder",
+                    {
+                        body:
+                        "Your reminder is working!"
+                    }
+                );
+
+            }
+
+            else {
+
+                alert(
+                    "Please allow notifications in your browser settings."
+                );
+
+            }
+
+        });
+
+    }
+
+
+    /* =========================
+       CHECK REMINDERS
+    ========================= */
+
+    function checkReminders() {
+
+        let now = new Date();
+
+
+        tasks.forEach(function(task) {
+
+            if (
+                task.date &&
+                task.time &&
+                !task.reminded &&
+                !task.completed
+            ) {
+
+
+                let reminderTime =
+                    new Date(
+                        task.date +
+                        "T" +
+                        task.time
+                    );
+
+
+                if (
+                    now >= reminderTime
+                ) {
+
+                    showReminder(task);
+
+
+                    task.reminded = true;
+
+                }
+
+            }
+
+        });
+
+
+        saveTasks();
+
+    }
+
+
+    /* =========================
+       SHOW REMINDER
+    ========================= */
+
+    function showReminder(task) {
+
+
+        if (
+            "Notification" in window &&
+            Notification.permission === "granted"
+        ) {
+
+
+            new Notification(
+                "🔔 To-Do Reminder",
+                {
+                    body: task.name
+                }
+            );
+
+
+        }
+
+
+        alert(
+            "🔔 REMINDER!\n\n" +
+            task.name
+        );
+
+    }
+
+
+    /* =========================
+       CHECK EVERY 10 SECONDS
+    ========================= */
+
+    setInterval(
+        checkReminders,
+        10000
+    );
+
+
+    /* =========================
+       CHECK WHEN PAGE OPENS
+    ========================= */
+
+    checkReminders();
+
+
+    /* =========================
+       DISPLAY SAVED TASKS
+    ========================= */
+
+    displayTasks();
+
+</script>
+  <script>
+    if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("sw.js");
+    }
+  </script>
+
+</body>
+</html>
